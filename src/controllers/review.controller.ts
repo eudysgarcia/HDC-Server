@@ -140,7 +140,7 @@ export const updateReview = async (req: Request, res: Response): Promise<void> =
     }
 
     // Verificar que el usuario sea el propietario de la review
-    if (review.user.toString() !== req.user?._id) {
+    if (review.user.toString() !== req.user?._id.toString()) {
       res.status(403).json({ message: 'No autorizado para actualizar esta review' });
       return;
     }
@@ -171,7 +171,7 @@ export const deleteReview = async (req: Request, res: Response): Promise<void> =
     }
 
     // Verificar que el usuario sea el propietario de la review o admin
-    if (review.user.toString() !== req.user?._id && req.user?.role !== 'admin') {
+    if (review.user.toString() !== req.user?._id.toString() && req.user?.role !== 'admin') {
       res.status(403).json({ message: 'No autorizado para eliminar esta review' });
       return;
     }
@@ -196,7 +196,7 @@ export const likeReview = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await review.addLike(req.user!._id);
+    await review.addLike(req.user!._id.toString());
     res.json({ message: 'Like agregado', likesCount: review.likes.length });
   } catch (error) {
     console.error('Error en likeReview:', error);
@@ -216,7 +216,7 @@ export const unlikeReview = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    await review.removeLike(req.user!._id);
+    await review.removeLike(req.user!._id.toString());
     res.json({ message: 'Like removido', likesCount: review.likes.length });
   } catch (error) {
     console.error('Error en unlikeReview:', error);

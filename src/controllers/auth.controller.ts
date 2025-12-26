@@ -36,7 +36,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
-        token: generateToken(user._id)
+        token: generateToken(user._id.toString())
       });
     } else {
       res.status(400).json({ message: 'Datos de usuario inválidos' });
@@ -73,7 +73,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         avatar: user.avatar,
         role: user.role,
-        token: generateToken(user._id)
+        token: generateToken(user._id.toString())
       });
     } else {
       res.status(401).json({ message: 'Email o contraseña incorrectos' });
