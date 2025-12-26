@@ -2,7 +2,7 @@ import { Document, Types } from 'mongoose';
 
 // Interfaz del documento Review en MongoDB
 export interface IReview extends Document {
-  _id: string;
+  _id: Types.ObjectId;
   user: Types.ObjectId;
   movieId: number;
   movieTitle: string;

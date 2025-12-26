@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 // Interfaz para la película vista
 export interface WatchedMovie {
@@ -14,7 +14,7 @@ export interface FavoriteMovie {
 
 // Interfaz del documento User en MongoDB
 export interface IUser extends Document {
-  _id: string;
+  _id: Types.ObjectId;
   name: string;
   email: string;
   password: string;

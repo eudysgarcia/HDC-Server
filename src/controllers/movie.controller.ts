@@ -115,7 +115,7 @@ export const searchMovies = async (req: Request, res: Response): Promise<void> =
 // @desc    Obtener géneros
 // @route   GET /api/movies/genres
 // @access  Public
-export const getGenres = async (req: Request, res: Response): Promise<void> => {
+export const getGenres = async (_req: Request, res: Response): Promise<void> => {
   try {
     const genres = await tmdbService.getGenres();
     res.json(genres);

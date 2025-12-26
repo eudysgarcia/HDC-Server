@@ -14,7 +14,7 @@ export const getPopular = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Obtener TV Shows trending
-export const getTrending = async (req: Request, res: Response): Promise<void> => {
+export const getTrending = async (_req: Request, res: Response): Promise<void> => {
   try {
     const tvShows = await tmdbService.getTrendingTVShows();
     res.json(tvShows);

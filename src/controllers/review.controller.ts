@@ -67,8 +67,9 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
     const populatedReview = await Review.findById(review._id).populate('user', 'name avatar');
 
     console.log('✅ Review creada exitosamente:', populatedReview?._id);
-    console.log('   Usuario:', populatedReview?.user?.name);
-    console.log('   Avatar:', populatedReview?.user?.avatar ? '✓ Presente' : '✗ Ausente');
+    const userPopulated = populatedReview?.user as any;
+    console.log('   Usuario:', userPopulated?.name);
+    console.log('   Avatar:', userPopulated?.avatar ? '✓ Presente' : '✗ Ausente');
     
     res.status(201).json(populatedReview);
   } catch (error: any) {
@@ -99,7 +100,8 @@ export const getMovieReviews = async (req: Request, res: Response): Promise<void
     // Debug: verificar avatares
     if (reviews.length > 0) {
       reviews.forEach((review, index) => {
-        console.log(`   Review ${index + 1}: Usuario ${review.user?.name}, Avatar: ${review.user?.avatar ? '✓' : '✗'}`);
+        const userPopulated = review.user as any;
+        console.log(`   Review ${index + 1}: Usuario ${userPopulated?.name}, Avatar: ${userPopulated?.avatar ? '✓' : '✗'}`);
       });
     }
 
