@@ -1,0 +1,83 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# Build
+dist/
+build/
+*.js
+*.js.map
+!vite.config.js
+!postcss.config.js
+!tailwind.config.js
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+lib-runtime/
+
+# Coverage directory
+coverage/
+*.lcov
+.nyc_output
+
+# IDEs y editores
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+.vercel.json
+
+# Sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporales
+*.tmp
+*.temp
+.cache/
+
+# Pruebas
+test-results/
+playwright-report/
+
