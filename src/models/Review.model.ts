@@ -52,8 +52,10 @@ const reviewSchema = new Schema<IReview>({
   timestamps: true
 });
 
-// Índice para mejorar búsquedas (removido unique para permitir múltiples comentarios)
-reviewSchema.index({ user: 1, movieId: 1 });
+// Índices para mejorar búsquedas
+// NO usamos índice compuesto user+movieId para permitir múltiples comentarios por usuario
+reviewSchema.index({ movieId: 1 });
+reviewSchema.index({ user: 1 });
 reviewSchema.index({ parentReview: 1 });
 
 // Método para agregar like (y remover dislike si existe)

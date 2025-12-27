@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit",
-    "vercel-build": "tsc"
+    "vercel-build": "tsc",
+    "drop-index": "tsx src/scripts/dropUniqueIndex.ts"
   },
   "keywords": [
     "movies",
