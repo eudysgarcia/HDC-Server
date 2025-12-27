@@ -20,8 +20,38 @@ const app = express();
 // Conectar a la base de datos
 connectDB();
 
-// Middlewares
-app.use(cors());
+// Configurar CORS para permitir el cliente de Vercel
+const allowedOrigins = [
+  'http://localhost:5173',          // Vite dev local
+  'http://localhost:5174',          // Vite dev alternativo
+  'http://localhost:3000',          // React dev
+  'https://hdc-client.vercel.app',  // Tu dominio de Vercel (cambiar por el real)
+  /\.vercel\.app$/,                 // Cualquier subdominio de vercel.app
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origin está en la lista permitida o coincide con el patrón
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') return allowed === origin;
+      return allowed.test(origin);
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS bloqueó petición desde: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 // Aumentar límite de body para permitir imágenes en base64
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -95,14 +125,14 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Iniciar servidor solo en desarrollo (no en Vercel/Serverless)
 if (env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
-  app.listen(env.PORT, () => {
-    console.log(`\n${'='.repeat(60)}`);
-    console.log(`🚀 Servidor Hablemos de Cine corriendo en http://localhost:${env.PORT}`);
-    console.log(`📚 Documentación Swagger: http://localhost:${env.PORT}/api-docs`);
-    console.log(`📝 Swagger JSON: http://localhost:${env.PORT}/api-docs.json`);
-    console.log(`🔧 Modo: ${env.NODE_ENV}`);
-    console.log(`${'='.repeat(60)}\n`);
-  });
+app.listen(env.PORT, () => {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`🚀 Servidor Hablemos de Cine corriendo en http://localhost:${env.PORT}`);
+  console.log(`📚 Documentación Swagger: http://localhost:${env.PORT}/api-docs`);
+  console.log(`📝 Swagger JSON: http://localhost:${env.PORT}/api-docs.json`);
+  console.log(`🔧 Modo: ${env.NODE_ENV}`);
+  console.log(`${'='.repeat(60)}\n`);
+});
 }
 
 export default app;

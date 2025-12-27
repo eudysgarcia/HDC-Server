@@ -9,6 +9,9 @@ export interface IReview extends Document {
   rating: number;
   comment: string;
   likes: Types.ObjectId[];
+  dislikes: Types.ObjectId[];
+  parentReview?: Types.ObjectId;  // Para respuestas a comentarios
+  isEdited: boolean;
   isApproved: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +19,8 @@ export interface IReview extends Document {
   // Métodos del modelo
   addLike(userId: string): Promise<IReview>;
   removeLike(userId: string): Promise<IReview>;
+  addDislike(userId: string): Promise<IReview>;
+  removeDislike(userId: string): Promise<IReview>;
 }
 
 // Datos para crear una review
@@ -39,7 +44,12 @@ export interface PopulatedReview {
   rating: number;
   comment: string;
   likes: string[];
+  dislikes: string[];
   likesCount: number;
+  dislikesCount: number;
+  parentReview?: string;
+  replies?: PopulatedReview[];
+  isEdited: boolean;
   isApproved: boolean;
   createdAt: Date;
   updatedAt: Date;

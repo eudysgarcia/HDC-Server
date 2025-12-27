@@ -6,7 +6,10 @@ import {
   updateReview,
   deleteReview,
   likeReview,
-  unlikeReview
+  unlikeReview,
+  dislikeReview,
+  undislikeReview,
+  replyToReview
 } from '../controllers/review.controller';
 import { protect } from '../middleware/auth.middleware';
 
@@ -218,6 +221,90 @@ router.delete('/:id', protect, deleteReview);
  */
 router.post('/:id/like', protect, likeReview);
 router.delete('/:id/like', protect, unlikeReview);
+
+/**
+ * @swagger
+ * /api/reviews/{id}/dislike:
+ *   post:
+ *     summary: Dar dislike a una reseña
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la reseña
+ *     responses:
+ *       200:
+ *         description: Dislike agregado
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Reseña no encontrada
+ *   delete:
+ *     summary: Quitar dislike de una reseña
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la reseña
+ *     responses:
+ *       200:
+ *         description: Dislike removido
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Reseña no encontrada
+ */
+router.post('/:id/dislike', protect, dislikeReview);
+router.delete('/:id/dislike', protect, undislikeReview);
+
+/**
+ * @swagger
+ * /api/reviews/{id}/reply:
+ *   post:
+ *     summary: Responder a una reseña
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la reseña
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - comment
+ *             properties:
+ *               comment:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 1000
+ *                 example: Estoy de acuerdo con tu opinión
+ *     responses:
+ *       201:
+ *         description: Respuesta creada exitosamente
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Reseña no encontrada
+ */
+router.post('/:id/reply', protect, replyToReview);
 
 export default router;
 

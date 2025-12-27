@@ -44,16 +44,7 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Verificar si el usuario ya tiene una review para esta película
-    const existingReview = await Review.findOne({
-      user: req.user._id,
-      movieId
-    });
-
-    if (existingReview) {
-      res.status(400).json({ message: 'Ya has creado una review para esta película' });
-      return;
-    }
+    // Ya no verificamos si existe una review previa, permitimos múltiples comentarios
 
     // Crear review
     const review = await Review.create({
@@ -91,21 +82,37 @@ export const getMovieReviews = async (req: Request, res: Response): Promise<void
     
     console.log(`📖 Obteniendo reviews para película/anime ID: ${movieId}`);
 
-    const reviews = await Review.find({ movieId, isApproved: true })
+    // Solo obtener reviews principales (sin parentReview)
+    const reviews = await Review.find({ 
+      movieId, 
+      isApproved: true,
+      parentReview: null 
+    })
       .populate('user', 'name avatar')
       .sort({ createdAt: -1 });
 
+    // Obtener respuestas para cada review
+    const reviewsWithReplies = await Promise.all(
+      reviews.map(async (review) => {
+        const replies = await Review.find({ 
+          parentReview: review._id,
+          isApproved: true 
+        })
+          .populate('user', 'name avatar')
+          .sort({ createdAt: 1 });
+
+        return {
+          ...review.toObject(),
+          replies,
+          likesCount: review.likes.length,
+          dislikesCount: review.dislikes.length
+        };
+      })
+    );
+
     console.log(`✅ Se encontraron ${reviews.length} reviews para película ${movieId}`);
     
-    // Debug: verificar avatares
-    if (reviews.length > 0) {
-      reviews.forEach((review, index) => {
-        const userPopulated = review.user as any;
-        console.log(`   Review ${index + 1}: Usuario ${userPopulated?.name}, Avatar: ${userPopulated?.avatar ? '✓' : '✗'}`);
-      });
-    }
-
-    res.json(reviews);
+    res.json(reviewsWithReplies);
   } catch (error) {
     console.error('❌ Error en getMovieReviews:', error);
     res.status(500).json({ message: 'Error del servidor' });
@@ -147,6 +154,7 @@ export const updateReview = async (req: Request, res: Response): Promise<void> =
 
     review.rating = req.body.rating || review.rating;
     review.comment = req.body.comment || review.comment;
+    review.isEdited = true;
 
     const updatedReview = await review.save();
     const populatedReview = await Review.findById(updatedReview._id).populate('user', 'name avatar');
@@ -221,6 +229,91 @@ export const unlikeReview = async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Error en unlikeReview:', error);
     res.status(500).json({ message: 'Error del servidor' });
+  }
+};
+
+// @desc    Dar dislike a una review
+// @route   POST /api/reviews/:id/dislike
+// @access  Private
+export const dislikeReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      res.status(404).json({ message: 'Review no encontrada' });
+      return;
+    }
+
+    await review.addDislike(req.user!._id.toString());
+    res.json({ 
+      message: 'Dislike agregado', 
+      dislikesCount: review.dislikes.length,
+      likesCount: review.likes.length 
+    });
+  } catch (error) {
+    console.error('Error en dislikeReview:', error);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
+};
+
+// @desc    Quitar dislike de una review
+// @route   DELETE /api/reviews/:id/dislike
+// @access  Private
+export const undislikeReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      res.status(404).json({ message: 'Review no encontrada' });
+      return;
+    }
+
+    await review.removeDislike(req.user!._id.toString());
+    res.json({ message: 'Dislike removido', dislikesCount: review.dislikes.length });
+  } catch (error) {
+    console.error('Error en undislikeReview:', error);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
+};
+
+// @desc    Responder a una review
+// @route   POST /api/reviews/:id/reply
+// @access  Private
+export const replyToReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const parentReview = await Review.findById(req.params.id);
+
+    if (!parentReview) {
+      res.status(404).json({ message: 'Review no encontrada' });
+      return;
+    }
+
+    const { comment } = req.body;
+
+    if (!comment) {
+      res.status(400).json({ message: 'El comentario es requerido' });
+      return;
+    }
+
+    // Crear respuesta
+    const reply = await Review.create({
+      user: req.user!._id,
+      movieId: parentReview.movieId,
+      movieTitle: parentReview.movieTitle,
+      rating: 0, // Las respuestas no tienen rating
+      comment,
+      parentReview: parentReview._id
+    });
+
+    const populatedReply = await Review.findById(reply._id).populate('user', 'name avatar');
+
+    res.status(201).json(populatedReply);
+  } catch (error: any) {
+    console.error('Error en replyToReview:', error);
+    res.status(500).json({ 
+      message: 'Error del servidor',
+      error: error.message 
+    });
   }
 };
 

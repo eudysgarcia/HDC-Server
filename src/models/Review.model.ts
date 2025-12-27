@@ -31,6 +31,19 @@ const reviewSchema = new Schema<IReview>({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  dislikes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  parentReview: {
+    type: Schema.Types.ObjectId,
+    ref: 'Review',
+    default: null
+  },
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
   isApproved: {
     type: Boolean,
     default: true
@@ -39,8 +52,9 @@ const reviewSchema = new Schema<IReview>({
   timestamps: true
 });
 
-// Índice compuesto para evitar reviews duplicados
-reviewSchema.index({ user: 1, movieId: 1 }, { unique: true });
+// Índice para mejorar búsquedas (removido unique para permitir múltiples comentarios)
+reviewSchema.index({ user: 1, movieId: 1 });
+reviewSchema.index({ parentReview: 1 });
 
 // Método para agregar like
 reviewSchema.methods.addLike = function(userId: string): Promise<IReview> {
@@ -56,6 +70,27 @@ reviewSchema.methods.addLike = function(userId: string): Promise<IReview> {
 reviewSchema.methods.removeLike = function(userId: string): Promise<IReview> {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   this.likes = this.likes.filter((id: any) => !id.equals(userObjectId));
+  return this.save();
+};
+
+// Método para agregar dislike
+reviewSchema.methods.addDislike = function(userId: string): Promise<IReview> {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  
+  // Remover el like si existe
+  this.likes = this.likes.filter((id: any) => !id.equals(userObjectId));
+  
+  // Agregar dislike si no existe
+  if (!this.dislikes.some((id: any) => id.equals(userObjectId))) {
+    this.dislikes.push(userObjectId);
+  }
+  return this.save();
+};
+
+// Método para remover dislike
+reviewSchema.methods.removeDislike = function(userId: string): Promise<IReview> {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  this.dislikes = this.dislikes.filter((id: any) => !id.equals(userObjectId));
   return this.save();
 };
 

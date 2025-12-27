@@ -96,3 +96,4 @@ Si quisieras mantener ES Modules, necesitarías:
 **Estado**: ✅ RESUELTO  
 **Fecha**: Diciembre 2025
 
+
