@@ -56,10 +56,14 @@ const reviewSchema = new Schema<IReview>({
 reviewSchema.index({ user: 1, movieId: 1 });
 reviewSchema.index({ parentReview: 1 });
 
-// Método para agregar like
+// Método para agregar like (y remover dislike si existe)
 reviewSchema.methods.addLike = function(userId: string): Promise<IReview> {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   
+  // Remover el dislike si existe
+  this.dislikes = this.dislikes.filter((id: any) => !id.equals(userObjectId));
+  
+  // Agregar like si no existe
   if (!this.likes.some((id: any) => id.equals(userObjectId))) {
     this.likes.push(userObjectId);
   }

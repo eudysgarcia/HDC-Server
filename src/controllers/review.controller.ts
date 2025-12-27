@@ -79,6 +79,7 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
 export const getMovieReviews = async (req: Request, res: Response): Promise<void> => {
   try {
     const movieId = parseInt(req.params.movieId);
+    const userId = req.user?._id; // Puede ser undefined si no está autenticado
     
     console.log(`📖 Obteniendo reviews para película/anime ID: ${movieId}`);
 
@@ -91,7 +92,29 @@ export const getMovieReviews = async (req: Request, res: Response): Promise<void
       .populate('user', 'name avatar')
       .sort({ createdAt: -1 });
 
-    // Obtener respuestas para cada review
+    // Función auxiliar para agregar metadata a una review
+    const addMetadata = (review: any) => {
+      const likesCount = review.likes.length;
+      const dislikesCount = review.dislikes.length;
+      let userAction: 'like' | 'dislike' | null = null;
+      
+      if (userId) {
+        const hasLike = review.likes.some((id: any) => id.equals(userId));
+        const hasDislike = review.dislikes.some((id: any) => id.equals(userId));
+        
+        if (hasLike) userAction = 'like';
+        else if (hasDislike) userAction = 'dislike';
+      }
+      
+      return {
+        ...review.toObject(),
+        likesCount,
+        dislikesCount,
+        userAction
+      };
+    };
+
+    // Obtener respuestas para cada review con metadata
     const reviewsWithReplies = await Promise.all(
       reviews.map(async (review) => {
         const replies = await Review.find({ 
@@ -101,11 +124,16 @@ export const getMovieReviews = async (req: Request, res: Response): Promise<void
           .populate('user', 'name avatar')
           .sort({ createdAt: 1 });
 
+        // Agregar metadata a cada respuesta
+        const repliesWithMetadata = replies.map(reply => addMetadata(reply));
+        
+        // Contar respuestas
+        const repliesCount = replies.length;
+
         return {
-          ...review.toObject(),
-          replies,
-          likesCount: review.likes.length,
-          dislikesCount: review.dislikes.length
+          ...addMetadata(review),
+          replies: repliesWithMetadata,
+          repliesCount
         };
       })
     );
@@ -192,7 +220,7 @@ export const deleteReview = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// @desc    Dar like a una review
+// @desc    Toggle like en una review (mutuamente excluyente con dislike)
 // @route   POST /api/reviews/:id/like
 // @access  Private
 export const likeReview = async (req: Request, res: Response): Promise<void> => {
@@ -204,8 +232,31 @@ export const likeReview = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    await review.addLike(req.user!._id.toString());
-    res.json({ message: 'Like agregado', likesCount: review.likes.length });
+    const userId = req.user!._id.toString();
+    const userObjectId = req.user!._id;
+    
+    // Verificar si ya tiene like
+    const hasLike = review.likes.some((id: any) => id.equals(userObjectId));
+    
+    if (hasLike) {
+      // Si ya tiene like, quitarlo (toggle off)
+      await review.removeLike(userId);
+      res.json({ 
+        message: 'Like removido', 
+        likesCount: review.likes.length,
+        dislikesCount: review.dislikes.length,
+        userAction: null
+      });
+    } else {
+      // Si no tiene like, agregarlo (y quita dislike si existe)
+      await review.addLike(userId);
+      res.json({ 
+        message: 'Like agregado', 
+        likesCount: review.likes.length,
+        dislikesCount: review.dislikes.length,
+        userAction: 'like'
+      });
+    }
   } catch (error) {
     console.error('Error en likeReview:', error);
     res.status(500).json({ message: 'Error del servidor' });
@@ -232,7 +283,7 @@ export const unlikeReview = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// @desc    Dar dislike a una review
+// @desc    Toggle dislike en una review (mutuamente excluyente con like)
 // @route   POST /api/reviews/:id/dislike
 // @access  Private
 export const dislikeReview = async (req: Request, res: Response): Promise<void> => {
@@ -244,12 +295,31 @@ export const dislikeReview = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    await review.addDislike(req.user!._id.toString());
-    res.json({ 
-      message: 'Dislike agregado', 
-      dislikesCount: review.dislikes.length,
-      likesCount: review.likes.length 
-    });
+    const userId = req.user!._id.toString();
+    const userObjectId = req.user!._id;
+    
+    // Verificar si ya tiene dislike
+    const hasDislike = review.dislikes.some((id: any) => id.equals(userObjectId));
+    
+    if (hasDislike) {
+      // Si ya tiene dislike, quitarlo (toggle off)
+      await review.removeDislike(userId);
+      res.json({ 
+        message: 'Dislike removido', 
+        dislikesCount: review.dislikes.length,
+        likesCount: review.likes.length,
+        userAction: null
+      });
+    } else {
+      // Si no tiene dislike, agregarlo (y quita like si existe)
+      await review.addDislike(userId);
+      res.json({ 
+        message: 'Dislike agregado', 
+        dislikesCount: review.dislikes.length,
+        likesCount: review.likes.length,
+        userAction: 'dislike'
+      });
+    }
   } catch (error) {
     console.error('Error en dislikeReview:', error);
     res.status(500).json({ message: 'Error del servidor' });
