@@ -114,25 +114,49 @@ export const getMovieReviews = async (req: Request, res: Response): Promise<void
       };
     };
 
-    // Obtener respuestas para cada review con metadata
+    // Función recursiva para obtener respuestas con anidamiento profundo
+    const getRepliesRecursive = async (parentId: any): Promise<any[]> => {
+      const replies = await Review.find({ 
+        parentReview: parentId,
+        isApproved: true 
+      })
+        .populate('user', 'name avatar')
+        .sort({ createdAt: 1 });
+
+      // Para cada respuesta, obtener sus respuestas recursivamente
+      const repliesWithNested = await Promise.all(
+        replies.map(async (reply) => {
+          const nestedReplies = await getRepliesRecursive(reply._id);
+          const replyWithMetadata = addMetadata(reply);
+          
+          return {
+            ...replyWithMetadata,
+            replies: nestedReplies,
+            repliesCount: nestedReplies.length
+          };
+        })
+      );
+
+      return repliesWithNested;
+    };
+
+    // Obtener respuestas para cada review con metadata (anidamiento profundo)
     const reviewsWithReplies = await Promise.all(
       reviews.map(async (review) => {
-        const replies = await Review.find({ 
-          parentReview: review._id,
-          isApproved: true 
-        })
-          .populate('user', 'name avatar')
-          .sort({ createdAt: 1 });
-
-        // Agregar metadata a cada respuesta
-        const repliesWithMetadata = replies.map(reply => addMetadata(reply));
+        const replies = await getRepliesRecursive(review._id);
         
-        // Contar respuestas
-        const repliesCount = replies.length;
+        // Contar todas las respuestas (incluyendo anidadas)
+        const countAllReplies = (repls: any[]): number => {
+          return repls.reduce((count, reply) => {
+            return count + 1 + (reply.replies ? countAllReplies(reply.replies) : 0);
+          }, 0);
+        };
+        
+        const repliesCount = countAllReplies(replies);
 
         return {
           ...addMetadata(review),
-          replies: repliesWithMetadata,
+          replies,
           repliesCount
         };
       })
