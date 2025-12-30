@@ -14,6 +14,7 @@ import movieRoutes from './routes/movie.routes';
 import userRoutes from './routes/user.routes';
 import reviewRoutes from './routes/review.routes';
 import tvRoutes from './routes/tv.routes';
+import translationRoutes from './routes/translation.routes';
 
 const app = express();
 
@@ -86,7 +87,8 @@ app.get('/', (_req: Request, res: Response) => {
       movies: '/api/movies',
       tv: '/api/tv',
       users: '/api/users',
-      reviews: '/api/reviews'
+      reviews: '/api/reviews',
+      translate: '/api/translate'
     }
   });
 });
@@ -96,6 +98,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/tv', tvRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/translate', translationRoutes);
 
 // Manejo de errores 404
 app.use((_req: Request, res: Response) => {
