@@ -1,13 +1,19 @@
 import { Request, Response } from 'express';
 import * as tmdbService from '../services/tmdb.service';
 
+// Helper para obtener el idioma del request
+const getLanguageFromRequest = (req: Request): string | undefined => {
+  return req.headers['accept-language'] as string | undefined;
+};
+
 // @desc    Obtener películas populares
 // @route   GET /api/movies/popular
 // @access  Public
 export const getPopular = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const movies = await tmdbService.getPopularMovies(page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getPopularMovies(page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getPopular:', error);
@@ -21,7 +27,8 @@ export const getPopular = async (req: Request, res: Response): Promise<void> => 
 export const getTrending = async (req: Request, res: Response): Promise<void> => {
   try {
     const timeWindow = (req.query.timeWindow as string) || 'week';
-    const movies = await tmdbService.getTrendingMovies(timeWindow);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getTrendingMovies(timeWindow, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getTrending:', error);
@@ -35,7 +42,8 @@ export const getTrending = async (req: Request, res: Response): Promise<void> =>
 export const getTopRated = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const movies = await tmdbService.getTopRatedMovies(page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getTopRatedMovies(page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getTopRated:', error);
@@ -49,7 +57,8 @@ export const getTopRated = async (req: Request, res: Response): Promise<void> =>
 export const getUpcoming = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const movies = await tmdbService.getUpcomingMovies(page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getUpcomingMovies(page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getUpcoming:', error);
@@ -63,7 +72,8 @@ export const getUpcoming = async (req: Request, res: Response): Promise<void> =>
 export const getNowPlaying = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const movies = await tmdbService.getNowPlayingMovies(page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getNowPlayingMovies(page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getNowPlaying:', error);
@@ -83,7 +93,8 @@ export const getMovieById = async (req: Request, res: Response): Promise<void> =
       return;
     }
     
-    const movie = await tmdbService.getMovieDetails(movieId);
+    const language = getLanguageFromRequest(req);
+    const movie = await tmdbService.getMovieDetails(movieId, language);
     res.json(movie);
   } catch (error) {
     console.error('Error en getMovieById:', error);
@@ -104,7 +115,8 @@ export const searchMovies = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const movies = await tmdbService.searchMovies(query, page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.searchMovies(query, page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en searchMovies:', error);
@@ -115,9 +127,10 @@ export const searchMovies = async (req: Request, res: Response): Promise<void> =
 // @desc    Obtener géneros
 // @route   GET /api/movies/genres
 // @access  Public
-export const getGenres = async (_req: Request, res: Response): Promise<void> => {
+export const getGenres = async (req: Request, res: Response): Promise<void> => {
   try {
-    const genres = await tmdbService.getGenres();
+    const language = getLanguageFromRequest(req);
+    const genres = await tmdbService.getGenres(language);
     res.json(genres);
   } catch (error) {
     console.error('Error en getGenres:', error);
@@ -138,7 +151,8 @@ export const getMoviesByGenre = async (req: Request, res: Response): Promise<voi
       return;
     }
     
-    const movies = await tmdbService.getMoviesByGenre(genreId, page);
+    const language = getLanguageFromRequest(req);
+    const movies = await tmdbService.getMoviesByGenre(genreId, page, language);
     res.json(movies);
   } catch (error) {
     console.error('Error en getMoviesByGenre:', error);

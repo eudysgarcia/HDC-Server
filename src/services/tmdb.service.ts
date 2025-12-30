@@ -10,7 +10,18 @@ import {
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original';
 
+// Mapeo de códigos de idioma de i18n a TMDB
+const languageMap: { [key: string]: string } = {
+  'es': 'es-ES',
+  'en': 'en-US',
+  'pt': 'pt-BR'
+};
 
+// Función helper para obtener el código de idioma de TMDB
+export const getTMDBLanguage = (lang?: string): string => {
+  if (!lang) return 'en-US';
+  return languageMap[lang] || languageMap[lang.split('-')[0]] || 'en-US';
+};
 
 // Cliente axios configurado con Bearer Token (recomendado para TMDB API v4)
 const tmdbClient: AxiosInstance = axios.create({
@@ -18,9 +29,6 @@ const tmdbClient: AxiosInstance = axios.create({
   headers: {
     'Authorization': `Bearer ${env.TMDB_ACCESS_TOKEN}`,
     'Content-Type': 'application/json'
-  },
-  params: {
-    language: 'es-ES'
   }
 });
 
@@ -34,10 +42,13 @@ const formatMovie = (movie: any): Movie => {
 };
 
 // Obtener películas populares
-export const getPopularMovies = async (page: number = 1): Promise<MovieResults> => {
+export const getPopularMovies = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/movie/popular', { 
-      params: { page } 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
     });
     return {
       ...response.data,
@@ -50,9 +61,13 @@ export const getPopularMovies = async (page: number = 1): Promise<MovieResults> 
 };
 
 // Obtener películas en tendencia
-export const getTrendingMovies = async (timeWindow: string = 'week'): Promise<MovieResults> => {
+export const getTrendingMovies = async (timeWindow: string = 'week', language?: string): Promise<MovieResults> => {
   try {
-    const response = await tmdbClient.get<MovieResults>(`/trending/movie/${timeWindow}`);
+    const response = await tmdbClient.get<MovieResults>(`/trending/movie/${timeWindow}`, {
+      params: {
+        language: getTMDBLanguage(language)
+      }
+    });
     return {
       ...response.data,
       results: response.data.results.map(formatMovie)
@@ -64,10 +79,13 @@ export const getTrendingMovies = async (timeWindow: string = 'week'): Promise<Mo
 };
 
 // Obtener películas mejor calificadas
-export const getTopRatedMovies = async (page: number = 1): Promise<MovieResults> => {
+export const getTopRatedMovies = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/movie/top_rated', { 
-      params: { page } 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
     });
     return {
       ...response.data,
@@ -80,10 +98,13 @@ export const getTopRatedMovies = async (page: number = 1): Promise<MovieResults>
 };
 
 // Obtener estrenos
-export const getUpcomingMovies = async (page: number = 1): Promise<MovieResults> => {
+export const getUpcomingMovies = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/movie/upcoming', { 
-      params: { page } 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
     });
     return {
       ...response.data,
@@ -96,10 +117,13 @@ export const getUpcomingMovies = async (page: number = 1): Promise<MovieResults>
 };
 
 // Obtener películas en cartelera
-export const getNowPlayingMovies = async (page: number = 1): Promise<MovieResults> => {
+export const getNowPlayingMovies = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/movie/now_playing', { 
-      params: { page } 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
     });
     return {
       ...response.data,
@@ -112,11 +136,12 @@ export const getNowPlayingMovies = async (page: number = 1): Promise<MovieResult
 };
 
 // Obtener detalles de una película
-export const getMovieDetails = async (movieId: number): Promise<MovieDetails> => {
+export const getMovieDetails = async (movieId: number, language?: string): Promise<MovieDetails> => {
   try {
     const response = await tmdbClient.get<MovieDetails>(`/movie/${movieId}`, {
       params: {
-        append_to_response: 'credits,videos,images,similar,recommendations'
+        append_to_response: 'credits,videos,images,similar,recommendations',
+        language: getTMDBLanguage(language)
       }
     });
     return formatMovie(response.data) as MovieDetails;
@@ -127,10 +152,14 @@ export const getMovieDetails = async (movieId: number): Promise<MovieDetails> =>
 };
 
 // Buscar películas
-export const searchMovies = async (query: string, page: number = 1): Promise<MovieResults> => {
+export const searchMovies = async (query: string, page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/search/movie', {
-      params: { query, page }
+      params: { 
+        query, 
+        page,
+        language: getTMDBLanguage(language)
+      }
     });
     return {
       ...response.data,
@@ -143,12 +172,13 @@ export const searchMovies = async (query: string, page: number = 1): Promise<Mov
 };
 
 // Obtener películas por género
-export const getMoviesByGenre = async (genreId: number, page: number = 1): Promise<MovieResults> => {
+export const getMoviesByGenre = async (genreId: number, page: number = 1, language?: string): Promise<MovieResults> => {
   try {
     const response = await tmdbClient.get<MovieResults>('/discover/movie', {
       params: {
         with_genres: genreId,
-        page
+        page,
+        language: getTMDBLanguage(language)
       }
     });
     return {
@@ -162,9 +192,13 @@ export const getMoviesByGenre = async (genreId: number, page: number = 1): Promi
 };
 
 // Obtener géneros
-export const getGenres = async (): Promise<GenreList> => {
+export const getGenres = async (language?: string): Promise<GenreList> => {
   try {
-    const response = await tmdbClient.get<GenreList>('/genre/movie/list');
+    const response = await tmdbClient.get<GenreList>('/genre/movie/list', {
+      params: {
+        language: getTMDBLanguage(language)
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Error al obtener géneros:', error);
@@ -173,9 +207,9 @@ export const getGenres = async (): Promise<GenreList> => {
 };
 
 // Obtener múltiples películas por IDs
-export const getMoviesByIds = async (movieIds: number[]): Promise<MovieDetails[]> => {
+export const getMoviesByIds = async (movieIds: number[], language?: string): Promise<MovieDetails[]> => {
   try {
-    const promises = movieIds.map(id => getMovieDetails(id));
+    const promises = movieIds.map(id => getMovieDetails(id, language));
     const movies = await Promise.all(promises);
     return movies;
   } catch (error) {
@@ -187,9 +221,14 @@ export const getMoviesByIds = async (movieIds: number[]): Promise<MovieDetails[]
 // ========== TV SHOWS ==========
 
 // Obtener TV Shows populares
-export const getPopularTVShows = async (page: number = 1): Promise<MovieResults> => {
+export const getPopularTVShows = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
-    const response = await tmdbClient.get('/tv/popular', { params: { page } });
+    const response = await tmdbClient.get('/tv/popular', { 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
+    });
     return {
       ...response.data,
       results: response.data.results.map((show: any) => ({
@@ -207,9 +246,13 @@ export const getPopularTVShows = async (page: number = 1): Promise<MovieResults>
 };
 
 // Obtener TV Shows trending
-export const getTrendingTVShows = async (): Promise<MovieResults> => {
+export const getTrendingTVShows = async (language?: string): Promise<MovieResults> => {
   try {
-    const response = await tmdbClient.get('/trending/tv/week');
+    const response = await tmdbClient.get('/trending/tv/week', {
+      params: {
+        language: getTMDBLanguage(language)
+      }
+    });
     return {
       ...response.data,
       results: response.data.results.map((show: any) => ({
@@ -227,9 +270,14 @@ export const getTrendingTVShows = async (): Promise<MovieResults> => {
 };
 
 // Obtener TV Shows mejor calificados
-export const getTopRatedTVShows = async (page: number = 1): Promise<MovieResults> => {
+export const getTopRatedTVShows = async (page: number = 1, language?: string): Promise<MovieResults> => {
   try {
-    const response = await tmdbClient.get('/tv/top_rated', { params: { page } });
+    const response = await tmdbClient.get('/tv/top_rated', { 
+      params: { 
+        page,
+        language: getTMDBLanguage(language)
+      } 
+    });
     return {
       ...response.data,
       results: response.data.results.map((show: any) => ({
@@ -247,9 +295,14 @@ export const getTopRatedTVShows = async (page: number = 1): Promise<MovieResults
 };
 
 // Buscar TV Shows
-export const searchTVShows = async (query: string): Promise<MovieResults> => {
+export const searchTVShows = async (query: string, language?: string): Promise<MovieResults> => {
   try {
-    const response = await tmdbClient.get('/search/tv', { params: { query } });
+    const response = await tmdbClient.get('/search/tv', { 
+      params: { 
+        query,
+        language: getTMDBLanguage(language)
+      } 
+    });
     return {
       ...response.data,
       results: response.data.results.map((show: any) => ({

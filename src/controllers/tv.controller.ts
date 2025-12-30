@@ -1,11 +1,17 @@
 import { Request, Response } from 'express';
 import tmdbService from '../services/tmdb.service';
 
+// Helper para obtener el idioma del request
+const getLanguageFromRequest = (req: Request): string | undefined => {
+  return req.headers['accept-language'] as string | undefined;
+};
+
 // Obtener TV Shows populares
 export const getPopular = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const tvShows = await tmdbService.getPopularTVShows(page);
+    const language = getLanguageFromRequest(req);
+    const tvShows = await tmdbService.getPopularTVShows(page, language);
     res.json(tvShows);
   } catch (error) {
     console.error('Error en getPopular (TV):', error);
@@ -14,9 +20,10 @@ export const getPopular = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Obtener TV Shows trending
-export const getTrending = async (_req: Request, res: Response): Promise<void> => {
+export const getTrending = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tvShows = await tmdbService.getTrendingTVShows();
+    const language = getLanguageFromRequest(req);
+    const tvShows = await tmdbService.getTrendingTVShows(language);
     res.json(tvShows);
   } catch (error) {
     console.error('Error en getTrending (TV):', error);
@@ -28,7 +35,8 @@ export const getTrending = async (_req: Request, res: Response): Promise<void> =
 export const getTopRated = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const tvShows = await tmdbService.getTopRatedTVShows(page);
+    const language = getLanguageFromRequest(req);
+    const tvShows = await tmdbService.getTopRatedTVShows(page, language);
     res.json(tvShows);
   } catch (error) {
     console.error('Error en getTopRated (TV):', error);
@@ -44,7 +52,8 @@ export const search = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ message: 'Query es requerido' });
       return;
     }
-    const tvShows = await tmdbService.searchTVShows(query);
+    const language = getLanguageFromRequest(req);
+    const tvShows = await tmdbService.searchTVShows(query, language);
     res.json(tvShows);
   } catch (error) {
     console.error('Error en search (TV):', error);
